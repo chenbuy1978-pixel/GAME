@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>親子地雷模擬器</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3efe2;--paper:#fffdf6;--ink:#2a3140;--mute:#6b7280;--red:#e5484d;--blue:#3b6fd8;--yel:#f6c945;--grn:#2f9e6b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d2230;--paper:#272d3e;--ink:#f1eee2;--mute:#a4a9b8}}
+:root[data-theme="dark"]{--bg:#1d2230;--paper:#272d3e;--ink:#f1eee2;--mute:#a4a9b8}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Zen Maru Gothic","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.6;min-height:100vh}
+main{max-width:560px;margin:0 auto;padding:16px}
+h1{font-size:28px;font-weight:900;margin:8px 0 4px;transform:rotate(-1.5deg)}
+h2{margin:6px 0}
+.card{background:var(--paper);border:2.5px solid var(--ink);border-radius:18px 22px 16px 24px;padding:16px;margin:12px 0;box-shadow:4px 4px 0 var(--ink)}
+.bars{display:grid;gap:8px}
+.bar{font-size:13px;font-weight:700;display:grid;grid-template-columns:78px 1fr;align-items:center;gap:8px}
+.track{height:14px;border:2px solid var(--ink);border-radius:9px;overflow:hidden;background:var(--bg)}
+.fill{height:100%;transition:width .5s}
+#rage{background:var(--red)}#bond{background:var(--blue)}
+.kid{display:flex;gap:12px;align-items:center}
+#face{font-size:56px;line-height:1}
+.scene{font-size:13px;color:var(--mute);font-weight:700}
+.say{font-size:18px;font-weight:700}
+.opts{display:grid;gap:10px}
+button{font:inherit;color:var(--ink);cursor:pointer}
+.opt{text-align:left;background:var(--paper);border:2.5px solid var(--ink);border-radius:14px;padding:12px 14px;box-shadow:3px 3px 0 var(--ink);transition:transform .1s,box-shadow .1s}
+.opt:hover:not(:disabled){transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.opt:disabled{opacity:.55;cursor:default}
+.opt:focus-visible,.go:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.go{background:var(--yel);color:#2a3140;border:2.5px solid var(--ink);border-radius:14px;padding:10px 22px;font-weight:900;font-size:16px;box-shadow:3px 3px 0 var(--ink);margin:4px}
+.ages{display:grid;gap:10px;margin-top:10px}
+.age{text-align:left;background:var(--paper);border:2.5px solid var(--ink);border-radius:14px;padding:12px 14px;box-shadow:3px 3px 0 var(--ink);font-weight:700}
+.age small{display:block;font-weight:500;color:var(--mute)}
+.react{border-left:6px solid var(--yel);padding-left:12px;margin:12px 0}
+.tip{color:var(--mute);font-size:14px}
+.boom{border-color:var(--red);box-shadow:4px 4px 0 var(--red)}
+.psy{border-left:6px solid var(--blue);padding:2px 0 2px 12px;margin:12px 0;font-size:15px}
+.psy b{display:block}
+.hug{color:var(--grn);font-weight:700}
+.big{font-size:80px;text-align:center;line-height:1.1}
+.center{text-align:center}
+.shake{animation:sh .5s}
+@keyframes sh{0%,100%{transform:none}20%{transform:translate(-10px,4px) rotate(-1deg)}40%{transform:translate(10px,-5px) rotate(1deg)}60%{transform:translate(-8px,3px)}80%{transform:translate(6px,-3px)}}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}.opt,.fill{transition:none}}
+.hide{display:none}
+#ko{position:fixed;inset:0;z-index:9;background:rgba(18,22,38,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:opacity .4s}
+#ko.hide{display:none}
+#ko.out{opacity:0}
+.stage{position:relative;width:min(340px,92vw);height:230px}
+.kidbox{position:absolute;left:0;bottom:30px;font-size:72px;animation:lunge .38s ease-in-out 8}
+@keyframes lunge{0%,100%{transform:translateX(0)}45%{transform:translateX(70px) scale(1.15)}}
+.par{position:absolute;right:6px;bottom:30px;font-size:84px;animation:hit .38s ease-in-out 8}
+@keyframes hit{0%,100%{transform:none}50%{transform:translateX(18px) rotate(10deg) scale(.94)}}
+.par.fly{animation:fly .9s ease-in forwards}
+@keyframes fly{to{transform:translate(260px,-320px) rotate(900deg);opacity:0}}
+.fx{position:absolute;font-weight:900;font-size:34px;color:#f6c945;-webkit-text-stroke:2px #2a3140;paint-order:stroke fill;animation:fxp .6s forwards;pointer-events:none}
+@keyframes fxp{0%{transform:scale(.2) rotate(-12deg);opacity:0}30%{transform:scale(1.3) rotate(6deg);opacity:1}100%{transform:scale(1) translateY(-30px);opacity:0}}
+.kotxt{font-size:72px;font-weight:900;color:#e5484d;-webkit-text-stroke:3px #fff;paint-order:stroke fill;animation:slam .5s both;margin:0}
+.kotxt.hide{display:none}
+@keyframes slam{0%{transform:scale(4);opacity:0}70%{transform:scale(.9);opacity:1}100%{transform:scale(1)}}
+.cap{color:#fff;font-weight:700;margin:4px 16px;text-align:center}
+@media (prefers-reduced-motion:reduce){.kidbox,.par,.fx,.kotxt{animation:none!important}}
+</style>
+</head>
+<body>
+<div id="ko" class="hide" role="presentation"><div class="stage"><div class="kidbox">🧒🥊</div><div class="par" id="par">🙂</div></div><p class="kotxt hide" id="kotxt">K.O.!</p><p class="cap" id="cap"></p></div>
+<main>
+<h1>親子地雷模擬器</h1>
+<p class="tip" style="margin:0">每句話都可能踩雷。先選孩子的年齡，守住他的情緒。</p>
+
+<div id="start" class="card">
+  <div class="big">💣</div>
+  <p>選錯一句，孩子的<b>雷點</b>就會爆炸，爆炸值滿了也會炸。結束後會告訴你心理學上發生了什麼，以及怎麼安慰孩子。</p>
+  <div class="ages" id="ages"></div>
+</div>
+
+<div id="game" class="hide">
+  <div class="card"><div class="kid"><div id="face">😊</div>
+    <div class="bars" style="flex:1">
+      <div class="bar"><span>爆炸值</span><div class="track"><div class="fill" id="rage"></div></div></div>
+      <div class="bar"><span>親子好感</span><div class="track"><div class="fill" id="bond"></div></div></div>
+    </div></div></div>
+  <div class="card">
+    <div class="scene" id="scene"></div>
+    <p class="say" id="say"></p>
+    <div class="opts" id="opts"></div>
+    <div id="after" class="hide">
+      <div class="react"><div id="reply"></div><div class="tip" id="tip"></div></div>
+      <div class="center"><button class="go" id="next">下一幕</button></div>
+    </div>
+  </div>
+</div>
+<div id="end" class="card hide"></div>
+</main>
+
+<script>
+// 選項：[文字, 爆炸值, 好感, 地雷, 孩子反應, 簡評]　心理：[概念, 該怎麼做, 安慰話]
+const AGES=[
+{n:"幼兒期 3–6 歲",d:"情緒說來就來、愛耍賴",f:["😊","😐","😣","😭"],S:[
+["超市","孩子在糖果區躺在地上大哭:「我要!我要!」",[
+["「再哭我就把你丟在這裡!」",0,-35,1,"(哭到喘不過氣)「不要不要!不要丟我!」","雷點:遺棄威脅。"],
+["蹲下來:「你好想要，我懂。今天不買，我陪你。」",-15,12,0,"(抽噎著抱住你)","命名情緒、守住界線。"],
+["「好啦好啦買給你，不要哭了。」",15,-5,0,"(破涕為笑，下次還會這招)","妥協會強化耍賴。"]],
+["幼兒的前額葉還沒發育完整，情緒要靠大人「共同調節」。遺棄威脅會觸發最深的被拋棄恐懼。","蹲下平視、說出他的感受、溫和而堅定地維持界線，等他平靜再講道理。","「你很難過對不對？我在這裡，哪裡都不去。」"]],
+["睡前","孩子縮在被子裡:「我怕黑，房間有怪獸……」",[
+["「世界上沒有怪獸，不要胡說！」",0,-30,1,"(把頭蒙進被子，哭了)","雷點:否定感受。"],
+["「我們一起檢查房間，再開小夜燈。」",-15,12,0,"(慢慢放鬆下來)","承認恐懼、給安全工具。"],
+["「自己睡才是大孩子。」",20,-6,0,"(眼睛瞪得大大的睡不著)","用羞愧逼他勇敢。"]],
+["3–6 歲是想像力高峰，恐懼對孩子來說是真的。否定感受只會讓他學會不說出來。","先接納恐懼，再給具體的安全感(夜燈、安撫玩偶、你的位置)。","「怪獸來了我會保護你，我就在隔壁。」"]],
+["手足","弟弟搶走姐姐的玩具，兩個人同時尖叫。",[
+["「你是姐姐，讓他一下！」",0,-30,1,"「每次都是我讓！你最偏心！」","雷點:強迫退讓、不公平。"],
+["「你們都想玩，我們一起想辦法。」",-12,10,0,"(兩人安靜下來看著你)","不裁判，只描述。"],
+["「再吵玩具全部沒收！」",25,-8,0,"(兩人都哭了)","處罰解決不了競爭。"]],
+["手足競爭的核心，是爭取父母的注意與愛(阿德勒)。「你是姐姐」會讓老大覺得愛是有條件的。","不判誰對誰錯、輪流表達；每個孩子安排專屬的單獨相處時間。","「你們兩個我都愛，一樣多。」"]],
+["吃飯","孩子手一抖，牛奶打翻在桌上，他低頭僵住。",[
+["「你怎麼這麼笨手笨腳！」",0,-30,1,"(眼淚掉下來)「我不是故意的……」","雷點:貼標籤。"],
+["「沒受傷就好，我們一起擦。」",-15,10,0,"(拿起抹布幫忙)","把焦點放在解決。"],
+["嘆口氣:「唉，又來了……」",20,-6,0,"(縮著肩膀不敢動)","嘆氣也會被聽成責備。"]],
+["孩子的自我概念，來自大人怎麼形容他(標籤效應)。「笨」會變成他對自己的看法，羞愧感也會壓過學習。","聚焦修復，而不是評價人，讓孩子知道犯錯是可以被修復的。","「打翻很正常，大人也會。我們一起擦乾淨。」"]]]},
+{n:"兒童期 7–12 歲",d:"在意成績、同儕與公平",f:["😊","😐","😒","😡"],S:[
+["放學","孩子垮著臉上車，小聲說:「我數學只考了 68……」",[
+["「68?!隔壁小傑不是都考 95 嗎？」",0,-30,1,"「你每次都拿別人跟我比！」","雷點:比較。"],
+["「哪幾題不會？我們一起看看。」",-10,10,0,"(鬆一口氣)「有幾題我真的看不懂。」","先處理問題，再處理分數。"],
+["「我就說你平常不認真吧。」",30,-10,0,"(把頭轉向窗外)","指責會讓他關上心門。"]],
+["社會比較會直接傷害自尊。孩子聽到的是「我的價值=分數」，容易形成固定型思維(Dweck)。","先接住失落，再把焦點放在「哪裡可以進步」，稱讚努力與策略而不是聰明。","「分數不等於你。我們一起找出方法，好嗎？」"]],
+["晚餐前","孩子抱著平板看影片，喊了三次都沒動。",[
+["直接伸手把平板抽走。",0,-30,1,"「我看到一半！你根本不尊重我！」","雷點:突襲式沒收。"],
+["「這集剩幾分鐘？看完就吃飯，好嗎？」",-10,10,0,"「還有三分鐘！」(乖乖看完)","給預告與選擇。"],
+["「天天滑，眼睛壞掉我可不管。」",20,-5,0,"(慢吞吞關掉)","威脅碎念會累積火氣。"]],
+["自我決定論指出，孩子需要「自主感」。突然沒收等於剝奪掌控，還會讓他學會偷偷來。","事先預告、一起訂規則，用「先…再…」讓他有選擇權。","「被打斷很掃興，謝謝你願意配合。」"]],
+["手足","哥哥告狀:「弟弟偷吃我的零食！」弟弟大喊:「他先推我！」",[
+["「每次都是你！你就是故意欺負弟弟！」",0,-30,1,"「你根本沒聽我說就判我有罪！」","雷點:貼標籤、先入為主。"],
+["「一個一個說，我都會聽完。」",-12,10,0,"(兩人輪流說，語氣緩下來)","輪流傾聽。"],
+["「都給我回房間！」",25,-8,0,"(兩人帶著怒氣離開)","沒有解決，只是延後。"]],
+["7–12 歲對公平極度敏感。大人一旦裁判或貼標籤，孩子的重點就變成「為什麼偏心」，而不是衝突本身。","先各自傾聽、複述感受，再引導他們自己提出解法，大人只做教練。","「你生氣，是因為覺得不公平，我聽見了。」"]],
+["晚上九點","孩子寫完作業哭著說:「我不想再去補習了……」",[
+["「花那麼多錢讓你補，說不補就不補？！」",0,-35,1,"「我又沒叫你幫我花錢！」","雷點:金錢愧疚。"],
+["「我們聊聊，哪一科讓你最累？」",-15,12,0,"(擦眼淚)「是數學，每次都跟不上。」","先問原因再找解法。"],
+["「忍一忍，長大你就會感謝我。」",25,-8,0,"「可是我現在就很痛苦……」","未來的感謝救不了現在。"]],
+["把「付出」變成「債」，孩子會背上愧疚，卻不會更有動力(外在壓力削弱內在動機)。","把累當成需要被理解的訊號，一起檢視負擔、調整節奏。","「累不是不努力，我們一起調整看看。」"]]]},
+{n:"青春期 13–17 歲",d:"要自主、要隱私、愛甩門",f:["🙂","😑","🙄","🤬"],S:[
+["深夜","你發現孩子凌晨一點還亮著手機在傳訊息。",[
+["「把手機給我！我要看你跟誰聊！」",0,-35,1,"「你憑什麼看我的訊息！我受夠了！」","雷點:侵犯隱私。"],
+["「很晚了，聊完就睡？想聊什麼隨時找我。」",-12,10,0,"「好啦，再五分鐘。」","尊重界線，表達關心。"],
+["「再玩我就停你網路！」",25,-8,0,"「停啊！我去網咖！」","威脅只會逼出對抗。"]],
+["青春期的任務是建立自我認同(艾瑞克森)，同儕與隱私是核心需求。偷看會讓孩子判定「這裡不安全」，之後更難開口。","一起協商手機與睡眠的規則，把關心放在睡眠與安全，不放在監控。","「我信任你，只是擔心你睡不夠。」"]],
+["衝突後","孩子大吼:「你根本不懂我！」然後甩上房門。",[
+["「我不懂？我養你這麼大！」",0,-35,1,"(門內傳來哭聲)「你永遠只會講這個！」","雷點:恩情勒索。"],
+["在門外輕聲:「我可能真的不懂，想說時我在。」",-18,14,0,"(門縫裡傳出一聲:「……嗯」)","留空間，留門。"],
+["「不要用這種態度跟我說話！」",25,-8,0,"「砰！」(音樂開到最大)","糾正態度會升級衝突。"]],
+["青少年的大腦情緒系統強、調節系統還在發展。被「驗證」感受，比被講道理更能讓他冷靜。","先暫停、不追打，等情緒退下再用開放式問題談。","「你不用現在說，想說的時候我都在。」"]],
+["手足","姐姐大吼:「他又亂用我的耳機！」弟弟:「借一下又不會壞！」",[
+["「他比你小，你就不能大方點嗎？」",0,-30,1,"「所以我的東西就活該被亂碰？！」","雷點:壓下界線、不被尊重。"],
+["「姐姐的界線被越過了很合理；弟弟，借東西先問。」",-12,10,0,"(姐姐點點頭，弟弟小聲道歉)","肯定界線並訂規則。"],
+["「你們自己解決，吵死了！」",20,-5,0,"(兩人摔門離開)","放任不處理。"]],
+["青春期的孩子需要「自己的領域」。要求他大方，等於否定他的界線，也示範了「忍耐才是乖」。","承認感受合理，再把規則說清楚，也對年幼的孩子講清楚「先問」。","「東西被亂動會生氣，很正常。」"]],
+["升學","孩子低聲說:「我不想念那所學校了……」",[
+["「你這樣下去一輩子都完了！」",0,-35,1,"(臉色發白)「你永遠只看到結果。」","雷點:災難化語言。"],
+["「聽起來壓力很大，是什麼讓你不想去？」",-15,12,0,"(紅著眼眶說出被霸凌的事)","先問，不急著判斷。"],
+["「別人都能，你為什麼不行？」",25,-8,0,"「我就是不行啦！」","比較加否定。"]],
+["災難化的話語會增加焦慮與無助感。孩子說「不想去」，背後常是更深的求救訊號。","先傾聽背後的原因，再一起評估選項，讓他知道你站在同一邊。","「你不用一個人扛，我陪你一起想辦法。」"]]]},
+{n:"成年期 18 歲以上",d:"躺平、失業、跟爸媽拿錢",f:["🙂","😑","😔","😤"],S:[
+["躺平在家","孩子失業半年，每天窩在房間打電動，你忍不住開口。他說:「我現在沒有要找工作。」",[
+["「你看人家誰誰都買房了，你怎麼這麼沒出息！」",0,-35,1,"(把耳機戴上)「對，我就是廢物，你滿意了吧。」","雷點:羞辱加比較。"],
+["「最近過得怎麼樣？想聊聊卡在哪裡嗎？」",-12,10,0,"(沉默一下)「……其實我不知道要從哪開始。」","好奇，不審判。"],
+["「整天打電動，你到底要廢到什麼時候？」",25,-10,0,"(關上房門)","指責只會讓他退得更深。"]],
+["成年初顯期的人常卡在「還沒準備好」。羞辱與比較帶來羞愧感，而羞愧會讓人更退縮、更不敢行動。","用開放式問題了解他卡在哪裡，把「你要怎樣」換成「你需要什麼」。","「你現在很辛苦，我們不急著要答案。」"]],
+["找不到工作","孩子低聲說:「我投了五十幾封履歷，幾乎都石沉大海……我是不是很沒用？」",[
+["「還不是你眼光太高，不肯去做基層！」",0,-30,1,"「所以全部都是我的錯？」(眼眶紅了)","雷點:把挫折歸因成人格缺陷。"],
+["「投這麼多封很不容易。我們一起看看履歷好嗎？」",-15,12,0,"(吸了吸鼻子)「好……謝謝。」","肯定努力，給具體幫助。"],
+["「去考公職啦，比較穩。」",15,-5,0,"「我不是沒想過……你根本沒聽我說。」","急著給解答，沒有接住情緒。"]],
+["連續受挫容易形成「習得無助」(Seligman)：覺得做什麼都沒用。把失敗說成個性問題，會加重這種想法。","先肯定他做過的努力，再把目標切成小步驟(改履歷、模擬面試、每週投幾封)。","「找不到工作不代表你不行，現在市場真的很難。」"]],
+["跟父母拿錢","孩子站在門口，小聲問:「媽……這個月可以先給我一點錢嗎？」",[
+["「都幾歲了還伸手要錢，我白養你了！」",0,-35,1,"(握緊拳頭)「我也不想的!!你以為我很想嗎！」","雷點:羞辱加否定付出。"],
+["「可以。我們來算算這個月需要多少，一起排個計畫。」",-12,10,0,"(鬆一口氣)「我會把支出記下來給你看。」","有尊嚴的協議。"],
+["默默轉帳，但重重嘆了口氣。",15,-6,0,"(拿了錢，卻更愧疚)","沒說出口的不滿孩子都感覺得到。"]],
+["經濟依賴本身已讓人羞愧，再被指責只會更想逃避。把金錢當成控制工具，也會傷害信任。","用清楚的協議(金額、期限、小目標)取代情緒性的指責，同時留意自己的底線。","「我們是一家人，我想跟你一起想辦法。」"]],
+["過年餐桌","弟弟剛加薪，大家舉杯，哥哥在角落低頭滑手機，氣氛尷尬。",[
+["「你要多學學你弟，別再丟我們的臉了！」",0,-35,1,"(放下筷子，起身離席)","雷點:手足比較加當眾羞辱。"],
+["把話題帶開，私下對哥哥說:「你來了我很開心。」",-12,12,0,"(微微點頭)「……謝謝。」","私下給溫暖。"],
+["「來，哥哥也說說最近在忙什麼？」",20,-8,0,"「沒什麼好說的。」(更加沉默)","當眾點名會增加壓力。"]],
+["當家人被拿來比較，容易被推向「代罪羔羊」角色，越被貼標籤越不想改變。","不拿手足比較，私下表達接納，把「你要像誰」換成「我看見你」。","「你不用跟任何人比，我看到你的努力。」"]],
+["深夜客廳","孩子坐在沙發:「我最近一直睡不好，也不想出門，什麼都提不起勁……」",[
+["「你就是閒閒沒事才會想太多！」",0,-35,1,"(笑了一下，眼神暗下來)「算了，當我沒說。」","雷點:否定痛苦。"],
+["「謝謝你告訴我。我陪你去看看醫生或諮商，好嗎？」",-20,15,0,"(眼淚掉下來)「……好。」","傾聽並引導求助。"],
+["「早點睡，明天就好了。」",20,-8,0,"(點點頭，但表情沒變)","輕描淡寫，錯過求助訊號。"]],
+["長期失眠、沒動力可能是憂鬱的訊號。把它說成「想太多」，等於告訴他不該求助。這不是診斷，專業評估才是安全的做法。","認真聽、不評價，陪他找醫師或心理諮商，也關心自己的狀態。","「謝謝你願意告訴我，我陪你一起面對。」"]]]}
+];
+const $=id=>document.getElementById(id);
+let A,L,i,rage,bond,locked,miss;
+const shuffle=a=>{a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
+const face=r=>A.f[r<25?0:r<50?1:r<75?2:3];
+function hud(){$("rage").style.width=rage+"%";$("bond").style.width=bond+"%";$("face").textContent=face(rage)}
+AGES.forEach((g,k)=>{const b=document.createElement("button");b.className="age";b.innerHTML=g.n+"<small>"+g.d+"</small>";b.onclick=()=>start(k);$("ages").appendChild(b)});
+function start(k){A=AGES[k];L=A.S;i=0;rage=20;bond=50;miss=[];koStop();$("start").classList.add("hide");$("end").classList.add("hide");$("game").classList.remove("hide");scene()}
+function scene(){
+  locked=false;const s=L[i];hud();
+  $("scene").textContent=A.n+"・"+s[0]+"("+(i+1)+"/"+L.length+")";$("say").textContent=s[1];
+  $("after").classList.add("hide");const o=$("opts");o.innerHTML="";
+  shuffle(s[2]).forEach(c=>{const b=document.createElement("button");b.className="opt";b.textContent=c[0];b.onclick=()=>pick(c,b);o.appendChild(b)});
+}
+function pick(c,b){
+  if(locked)return;locked=true;
+  document.querySelectorAll(".opt").forEach(x=>x.disabled=true);b.style.opacity=1;b.style.background="var(--yel)";b.style.color="#2a3140";
+  rage=Math.max(0,Math.min(100,rage+c[1]));bond=Math.max(0,Math.min(100,bond+c[2]));
+  if(c[1]>=0&&!miss.includes(i))miss.push(i);
+  if(c[3]){boom(c,"踩到雷點了！");return}
+  hud();
+  if(rage>=100){boom(c,"爆炸值滿了！",1);return}
+  $("reply").innerHTML="<b>孩子:</b>"+c[4];$("tip").textContent=c[5];
+  $("next").textContent=i===L.length-1?"看今天的結果":"下一幕";
+  $("after").classList.remove("hide");
+}
+function psy(k){const p=L[k][3];return '<div class="psy"><b>'+L[k][0]+'・心理學怎麼看</b>'+p[0]+'<br><b>可以這樣做</b>'+p[1]+'<br><b>安慰話</b><span class="hug">'+p[2]+'</span></div>'}
+function boom(c,title,acc){
+  hud();document.body.classList.add("shake");setTimeout(()=>document.body.classList.remove("shake"),600);koStart();
+  const e=$("end");e.className="card boom";
+  e.innerHTML='<div class="big">💥</div><h2 class="center">'+title+'</h2><div class="react"><b>孩子:</b>'+(acc?"「我受夠了啦！！！」":c[4])+'</div><p>'+(acc?"一整天的小摩擦累積起來，最後一點小事就引爆了。":c[5])+'</p><p class="tip">撐到第 '+(i+1)+' 幕 / 共 '+L.length+' 幕</p>'+miss.slice(-3).map(psy).join("")+'<div class="center"><button class="go" id="again">重來一次</button><button class="go" id="home">換年齡</button></div>';
+  end();
+}
+function finish(){
+  const t=bond>=90?["🏆","神隊友家長","孩子願意把心事交給你。"]:bond>=65?["👍","及格家長","沒被炸，也累積了不少信任。"]:["😮‍💨","勉強生還","沒爆炸，但關係有點疲乏。"];
+  const e=$("end");e.className="card";
+  e.innerHTML='<div class="big">'+t[0]+'</div><h2 class="center">'+t[1]+'</h2><p class="center">'+t[2]+'</p><p class="tip center">爆炸值 '+rage+' / 親子好感 '+bond+'</p>'+(miss.length?'<p><b>這幾個地方可以更好:</b></p>'+miss.slice(0,3).map(psy).join(""):'<p class="center">每一幕都選到了溫柔的回應，太棒了！</p>')+'<div class="center"><button class="go" id="again">再玩一次</button><button class="go" id="home">換年齡</button></div>';
+  end();
+}
+function end(){$("game").classList.add("hide");$("again").onclick=()=>start(AGES.indexOf(A));$("home").onclick=()=>{koStop();$("end").classList.add("hide");$("start").classList.remove("hide")};window.scrollTo(0,0)}
+$("next").onclick=()=>{i++;if(i>=L.length)finish();else scene()};
+
+// 拳擊 KO 動畫
+let koT=[];
+const KOCAP=["這拳，是替所有被比較的孩子出的！","家長進入了「反省模式」。","孩子的怒氣，100% 傳達！","裁判:這局，孩子大獲全勝。","下次說話前，先想想這一拳。"];
+function koStop(){koT.forEach(clearTimeout);koT=[];$("ko").classList.add("hide");document.querySelectorAll(".fx").forEach(x=>x.remove())}
+function koStart(){
+  koStop();const k=$("ko"),p=$("par"),st=k.querySelector(".stage"),W=["POW!","BAM!","WHAM!","BOOM!","KAPOW!"],F=["🙂","😮","😖","😫","🤕","😵"];
+  const at=(f,t)=>koT.push(setTimeout(f,t));
+  const cap=KOCAP[Math.floor(Math.random()*KOCAP.length)];
+  p.className="par";p.textContent=F[0];$("kotxt").classList.add("hide");$("cap").textContent="";
+  k.classList.remove("hide","out");k.onclick=koStop;
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches){p.textContent="😵";$("kotxt").classList.remove("hide");$("cap").textContent=cap;at(koStop,2500);return}
+  for(let n=0;n<8;n++)at(()=>{
+    const s=document.createElement("span");s.className="fx";s.textContent=W[Math.floor(Math.random()*W.length)];
+    s.style.left=(45+Math.random()*40)+"%";s.style.top=(Math.random()*45)+"%";st.appendChild(s);setTimeout(()=>s.remove(),700);
+    p.textContent=F[Math.min(F.length-1,Math.ceil((n+1)*5/8))]},300+n*380);
+  at(()=>{p.className="par fly";p.textContent="😵"},3500);
+  at(()=>{$("kotxt").classList.remove("hide");$("cap").textContent=cap},4000);
+  at(()=>k.classList.add("out"),6200);
+  at(koStop,6600);
+}
+</script>
+</body>
+</html>
